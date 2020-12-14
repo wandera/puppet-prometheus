@@ -125,5 +125,6 @@ class prometheus::mongodb_exporter (
     scrape_port        => $scrape_port,
     scrape_job_name    => $scrape_job_name,
     scrape_job_labels  => $scrape_job_labels,
+    archive_bin_path   => '/opt/mongodb_exporter',
   }
 }
