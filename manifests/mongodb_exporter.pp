@@ -98,7 +98,7 @@ class prometheus::mongodb_exporter (
 
   $options = "${flag_prefix}mongodb.uri=${cnf_uri} ${extra_options}"
 
-  file {["/opt/${title}-${version}.${os}-${arch}"]:
+  file {["/opt/mongodb_exporter-${version}.${os}-${arch}"]:
     ensure => $use_kingpin ? {
       true  => directory,
       false => absent,
@@ -134,7 +134,7 @@ class prometheus::mongodb_exporter (
     scrape_job_name    => $scrape_job_name,
     scrape_job_labels  => $scrape_job_labels,
     extract_path       => $use_kingpin ? {
-      true  => "/opt/${title}-${version}.${os}-${arch}",
+      true  => "/opt/mongodb_exporter-${version}.${os}-${arch}",
       false => "/opt",
     }
   }
