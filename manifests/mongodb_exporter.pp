@@ -51,6 +51,10 @@
 #  Since version 0.7.0, the mongodb exporter uses kingpin, thus
 #  this param to define how we call the mongodb.uri in the $options
 #  https://github.com/percona/mongodb_exporter/blob/v0.7.0/CHANGELOG.md
+# @param create_extract_folder
+#  Due to inconsistent inclusion of the root folder in the mongodb exporter
+#  upstream, this param is used to create the folder for extraction in order
+#  to match the soft link created (default false)
 class prometheus::mongodb_exporter (
   String[1] $cnf_uri,
   String[1] $download_extension,
@@ -63,6 +67,7 @@ class prometheus::mongodb_exporter (
   String[1] $user,
   String[1] $version,
   Boolean $use_kingpin,
+  Boolean $create_extract_folder,
   Boolean $purge_config_dir               = true,
   Boolean $restart_on_change              = true,
   Boolean $service_enable                 = true,
@@ -99,7 +104,7 @@ class prometheus::mongodb_exporter (
   $options = "${flag_prefix}mongodb.uri=${cnf_uri} ${extra_options}"
 
   file {["/opt/mongodb_exporter-${version}.${os}-${arch}"]:
-    ensure => $use_kingpin ? {
+    ensure => $create_extract_folder ? {
       true  => directory,
       false => absent,
     },
@@ -133,7 +138,7 @@ class prometheus::mongodb_exporter (
     scrape_port        => $scrape_port,
     scrape_job_name    => $scrape_job_name,
     scrape_job_labels  => $scrape_job_labels,
-    extract_path       => $use_kingpin ? {
+    extract_path       => $create_extract_folder ? {
       true  => "/opt/mongodb_exporter-${version}.${os}-${arch}",
       false => "/opt",
     }
