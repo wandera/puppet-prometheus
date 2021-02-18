@@ -51,7 +51,7 @@
 #  Since version 0.7.0, the mongodb exporter uses kingpin, thus
 #  this param to define how we call the mongodb.uri in the $options
 #  https://github.com/percona/mongodb_exporter/blob/v0.7.0/CHANGELOG.md
-# @param create_extract_folder
+# @param create_extract_dir
 #  Due to inconsistent inclusion of the root folder in the mongodb exporter
 #  upstream, this param is used to create the folder for extraction in order
 #  to match the soft link created (default false)
@@ -67,7 +67,7 @@ class prometheus::mongodb_exporter (
   String[1] $user,
   String[1] $version,
   Boolean $use_kingpin,
-  Boolean $create_extract_folder,
+  Boolean $create_extract_dir,
   Boolean $purge_config_dir               = true,
   Boolean $restart_on_change              = true,
   Boolean $service_enable                 = true,
@@ -79,6 +79,7 @@ class prometheus::mongodb_exporter (
   Boolean $manage_user                    = true,
   String[1] $os                           = downcase($facts['kernel']),
   String $extra_options                   = '',
+  String $extract_dir                     = '/opt',
   Optional[String] $download_url          = undef,
   String[1] $arch                         = $prometheus::real_arch,
   String[1] $bin_dir                      = $prometheus::bin_dir,
@@ -103,12 +104,12 @@ class prometheus::mongodb_exporter (
 
   $options = "${flag_prefix}mongodb.uri=${cnf_uri} ${extra_options}"
 
-  file {["/opt/mongodb_exporter-${version}.${os}-${arch}"]:
+  file {["${extract_dir}/mongodb_exporter-${version}.${os}-${arch}"]:
     ensure => $create_extract_folder ? {
       true  => directory,
       false => absent,
     },
-    mode   => '0777',
+    mode   => '0755',
   }
 
   prometheus::daemon { 'mongodb_exporter':
@@ -138,9 +139,9 @@ class prometheus::mongodb_exporter (
     scrape_port        => $scrape_port,
     scrape_job_name    => $scrape_job_name,
     scrape_job_labels  => $scrape_job_labels,
-    extract_path       => $create_extract_folder ? {
-      true  => "/opt/mongodb_exporter-${version}.${os}-${arch}",
-      false => "/opt",
+    extract_path       => $create_extract_dir ? {
+      true  => "${extract_dir}/mongodb_exporter-${version}.${os}-${arch}",
+      false => "${extract_dir}",
     }
   }
 }
