@@ -109,12 +109,11 @@ class prometheus::mongodb_exporter (
 
   $options = "${flag_prefix}mongodb.uri=${cnf_uri} ${extra_options}"
 
-  file {["${extract_dir}"]:
-    ensure => $create_extract_dir ? {
-      true  => directory,
-      false => absent,
-    },
-    mode   => '0755',
+  if ($create_extract_dir) {
+    file {["${extract_dir}"]:
+      ensure => directory,
+      mode   => '0755',
+    }
   }
 
   prometheus::daemon { 'mongodb_exporter':
