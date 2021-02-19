@@ -55,6 +55,11 @@
 #  Due to inconsistent inclusion of the root folder in the mongodb exporter
 #  upstream, this param is used to create the folder for extraction in order
 #  to match the soft link created (default false)
+# @param extract_dir
+#  Directory to extract exporter to, this should be used when
+#  create_extract_dir is false and should be set to "/opt" when a root folder
+#  is included in the version of mongodb_exporter upstream that you use
+
 class prometheus::mongodb_exporter (
   String[1] $cnf_uri,
   String[1] $download_extension,
@@ -79,7 +84,6 @@ class prometheus::mongodb_exporter (
   Boolean $manage_user                    = true,
   String[1] $os                           = downcase($facts['kernel']),
   String $extra_options                   = '',
-  String $extract_dir                     = '/opt',
   Optional[String] $download_url          = undef,
   String[1] $arch                         = $prometheus::real_arch,
   String[1] $bin_dir                      = $prometheus::bin_dir,
@@ -88,6 +92,7 @@ class prometheus::mongodb_exporter (
   Stdlib::Port $scrape_port               = 9216,
   String[1] $scrape_job_name              = 'mongodb',
   Optional[Hash] $scrape_job_labels       = undef,
+  Stdlib::AbsolutePath $extract_dir       = "/opt/mongodb_exporter-${version}.${os}-${arch}",
 ) inherits prometheus {
   #Please provide the download_url for versions < 0.9.0
   $real_download_url = pick($download_url,"${download_url_base}/download/v${version}/${package_name}-${version}.${os}-${arch}.${download_extension}")
@@ -104,8 +109,8 @@ class prometheus::mongodb_exporter (
 
   $options = "${flag_prefix}mongodb.uri=${cnf_uri} ${extra_options}"
 
-  file {["${extract_dir}/mongodb_exporter-${version}.${os}-${arch}"]:
-    ensure => $create_extract_folder ? {
+  file {["${extract_dir}"]:
+    ensure => $create_extract_dir ? {
       true  => directory,
       false => absent,
     },
@@ -139,9 +144,6 @@ class prometheus::mongodb_exporter (
     scrape_port        => $scrape_port,
     scrape_job_name    => $scrape_job_name,
     scrape_job_labels  => $scrape_job_labels,
-    extract_path       => $create_extract_dir ? {
-      true  => "${extract_dir}/mongodb_exporter-${version}.${os}-${arch}",
-      false => "${extract_dir}",
-    }
+    extract_path       => $extract_dir,
   }
 }
