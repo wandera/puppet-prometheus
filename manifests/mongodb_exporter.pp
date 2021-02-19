@@ -51,6 +51,15 @@
 #  Since version 0.7.0, the mongodb exporter uses kingpin, thus
 #  this param to define how we call the mongodb.uri in the $options
 #  https://github.com/percona/mongodb_exporter/blob/v0.7.0/CHANGELOG.md
+# @param create_extract_dir
+#  Due to inconsistent inclusion of the root folder in the mongodb exporter
+#  upstream, this param is used to create the folder for extraction in order
+#  to match the soft link created (default false)
+# @param extract_dir
+#  Directory to extract exporter to, this should be used when
+#  create_extract_dir is false and should be set to "/opt" when a root folder
+#  is included in the version of mongodb_exporter upstream that you use
+
 class prometheus::mongodb_exporter (
   String[1] $cnf_uri,
   String[1] $download_extension,
@@ -63,6 +72,7 @@ class prometheus::mongodb_exporter (
   String[1] $user,
   String[1] $version,
   Boolean $use_kingpin,
+  Boolean $create_extract_dir,
   Boolean $purge_config_dir               = true,
   Boolean $restart_on_change              = true,
   Boolean $service_enable                 = true,
@@ -82,6 +92,7 @@ class prometheus::mongodb_exporter (
   Stdlib::Port $scrape_port               = 9216,
   String[1] $scrape_job_name              = 'mongodb',
   Optional[Hash] $scrape_job_labels       = undef,
+  Stdlib::AbsolutePath $extract_dir       = "/opt/mongodb_exporter-${version}.${os}-${arch}",
 ) inherits prometheus {
   #Please provide the download_url for versions < 0.9.0
   $real_download_url = pick($download_url,"${download_url_base}/download/v${version}/${package_name}-${version}.${os}-${arch}.${download_extension}")
@@ -97,6 +108,13 @@ class prometheus::mongodb_exporter (
   }
 
   $options = "${flag_prefix}mongodb.uri=${cnf_uri} ${extra_options}"
+
+  if ($create_extract_dir) {
+    file {["${extract_dir}"]:
+      ensure => directory,
+      mode   => '0755',
+    }
+  }
 
   prometheus::daemon { 'mongodb_exporter':
     install_method     => $install_method,
@@ -125,5 +143,6 @@ class prometheus::mongodb_exporter (
     scrape_port        => $scrape_port,
     scrape_job_name    => $scrape_job_name,
     scrape_job_labels  => $scrape_job_labels,
+    extract_path       => $extract_dir,
   }
 }
